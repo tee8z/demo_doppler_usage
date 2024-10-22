@@ -11,12 +11,12 @@ recommened:
 npm install
 ```
 
-# Run the proxy on default port 8080
+#### Run the proxy on default port 8080
 ```sh
 npm start
 ```
 
-# Open the index.html file
+#### Open the index.html file
 ```sh
 open index.html
 ```

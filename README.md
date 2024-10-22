@@ -5,9 +5,8 @@ Should have the doppler cluster running, this is built with the assumption "exam
 
 Needs a simple proxy server to handle the cors headers between the different node's APIs and the browser
 
-recommened:
+#### Install packages for proxy server
 ```sh
-# Install
 npm install
 ```
 

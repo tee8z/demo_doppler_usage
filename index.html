@@ -37,17 +37,23 @@
     </head>
     <body>
         <h1>Simple App</h1>
-        <button onclick="makeCoreLnRequest()">Make Coreln Request</button>
-        <button onclick="makeEclairRequest()">Make Eclair Request</button>
-        <button onclick="makeLndRequest()">Make LND Request</button>
+        <!--<button onclick="makeLndRequest()">Getinfo LND Request</button>-->
+        <button onclick="makeCoreLnRequest()">Getinfo Coreln</button>
+        <button onclick="makeEclairRequest()">Getinfo Eclair Request</button>
+
+        <button onclick="createCoreLnOffer()">Make Coreln Offer</button>
+        <button onclick="payCoreLnOfferEclair()">
+            Pay Coreln Offer from Eclair
+        </button>
+        <input type="text" id="offer" />
         <pre id="response" class="pre-output">Response will appear here...</pre>
         <script>
             const coreln = "https://localhost:9097/v1";
-            const rune = "LlxDJVZ3zcf-i111R31K4i3dVAgRK7AX8oN2YhpvHQ09MA==";
+            const rune = "ZNfqnwDJFBBAJXCPK0mUHOd3c6IvUhWJG3jhj3tODAw9MQ==";
 
             const lnd = "https://localhost:9103/v1";
             const macaroon =
-                "0201036c6e6402f801030a10aa26910b76937f3eabfbccdbfd2a80081201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006202d38fbeaf23727b3f8bf2368f4ce0ca21913d74ae82ff4bc4ab0a2b649af2b30";
+                "0201036c6e6402f801030a103b277295bf740c198c4b5260af40d1571201301a160a0761646472657373120472656164120577726974651a130a04696e666f120472656164120577726974651a170a08696e766f69636573120472656164120577726974651a210a086d616361726f6f6e120867656e6572617465120472656164120577726974651a160a076d657373616765120472656164120577726974651a170a086f6666636861696e120472656164120577726974651a160a076f6e636861696e120472656164120577726974651a140a057065657273120472656164120577726974651a180a067369676e6572120867656e6572617465120472656164000006200e2be9371719e4f0a9e60bffb2c5b15914775df53043e83099625a8a2e17e6e6";
 
             const eclair = "localhost:9100";
             const password = "test1234";
@@ -74,12 +80,89 @@
                         {
                             method: "POST",
                             headers: {
-                                Rune: "LlxDJVZ3zcf-i111R31K4i3dVAgRK7AX8oN2YhpvHQ09MA==",
+                                Rune: rune,
                             },
                         },
                     );
 
                     if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+
+                    const data = await response.json();
+                    responseElement.textContent =
+                        "Response:\n" + JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error("Error:", error);
+                    responseElement.textContent = "Error: " + error.message;
+                }
+            }
+
+            async function createCoreLnOffer() {
+                const responseElement = document.getElementById("response");
+
+                responseElement.textContent = "Making request to coreln...";
+
+                try {
+                    const response = await fetch(
+                        `${corsProxyUrl}/${coreln}/offer`,
+                        {
+                            method: "POST",
+                            headers: {
+                                Rune: rune,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                amount: 100000,
+                                absolute_expiry: 1730262305,
+                                description: "tabconf 2024",
+                            }),
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+
+                    const data = await response.json();
+                    responseElement.textContent =
+                        "Response:\n" + JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error("Error:", error);
+                    responseElement.textContent = "Error: " + error.message;
+                }
+            }
+
+            async function payCoreLnOfferEclair() {
+                const responseElement = document.getElementById("response");
+
+                responseElement.textContent = "Making request to coreln...";
+                const offer = document.getElementById("offer").value;
+                const encodedCredentials = btoa(":" + password);
+
+                try {
+                    const formData = new FormData();
+                    formData.append("offer", offer);
+                    formData.append("amountMsat", "100000");
+                    formData.append("blocking", "true");
+                    formData.append("connectDirectly", "true");
+                    const response = await fetch(
+                        `${corsProxyUrl}/${eclair}/payoffer`,
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Basic ${encodedCredentials}`,
+                            },
+                            body: formData,
+                        },
+                    );
+
+                    if (!response.ok) {
+                        console.log(response);
                         throw new Error(
                             `HTTP error! status: ${response.status}`,
                         );
